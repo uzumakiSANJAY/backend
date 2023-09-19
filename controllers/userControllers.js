@@ -97,8 +97,45 @@ const authUser = asyncHandler(async (req, res) => {
     }
   } catch (error) {
     res.status(500);
-    console.log("");
+    console.log(error);
     throw new Error("Invalid Email or Password");
+  }
+});
+
+const adminAuth = asyncHandler(async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+    if (user && (await user.matchPassword(password))) {
+      if (user.is_varified === true) {
+        if (user.is_admin === true) {
+          res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            is_admin: user.is_admin,
+            is_varified: user.is_varified,
+            pic: user.pic,
+            token: generateToken(user._id),
+          });
+        } else {
+          res.json({
+            status: false,
+            message: "User has no admin access",
+          });
+        }
+      } else {
+        res.json({
+          status: false,
+          message: "User is not varified !! Verify first and the try to login",
+        });
+      }
+    }
+  } catch (error) {
+    res.status(500);
+    console.log(error);
+    throw new Error("Invalid Email or Password or No Admin Access");
   }
 });
 
@@ -343,4 +380,5 @@ module.exports = {
   authUserOTPLogin,
   forgetPasswordEmailOtpSend,
   forgetPasswordChange,
+  adminAuth,
 };
